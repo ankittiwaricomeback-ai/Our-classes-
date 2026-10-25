@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassTrack — Tuition Progress Portal</title>
+<style>
+:root {
+  --site-primary: #183b66;
+  --site-on-primary: #ffffff;
+  --site-secondary: #dcecff;
+  --site-on-secondary: #183b66;
+  --site-background: #f3f6fb;
+  --site-on-background: #17243a;
+  --site-font-body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --site-font-heading: Inter, system-ui, sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--site-font-body);
+  background: light-dark(#f3f6fb,#101722);
+  color: light-dark(#17243a,#eef3fc);
+}
+#app {
+  min-height: 100vh;
+  width: 100%;
+  background-color: light-dark(var(--site-background),#101722);
+  color: light-dark(var(--site-on-background),#eef3fc);
+  border-radius: 0;
+}
+button,input,select { font: inherit; }
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: calc(12px * var(--site-radius-scale));
+  padding: calc(11px * var(--site-spacing-scale)) calc(15px * var(--site-spacing-scale));
+  font-weight: 700;
+}
+.primary { background: var(--site-primary); color: var(--site-on-primary); }
+.secondary { background: var(--site-secondary); color: var(--site-on-secondary); }
+.ghost {
+  background: transparent;
+  border: 1px solid light-dark(#d8e0ed,#334155);
+  color: inherit;
+}
+.danger { color: #b42318; background: #fee4e2; }
+.topbar {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:16px; padding:18px clamp(16px,4vw,48px);
+  background:var(--site-primary); color:var(--site-on-primary);
+}
+.brand { display:flex; align-items:center; gap:11px; font-weight:850; letter-spacing:-.5px; font-size:20px; }
+.brand-icon {
+  width:40px;height:40px;display:grid;place-items:center;
+  border-radius:13px;background:rgba(255,255,255,.16);font-size:22px;
+}
+.topnote { font-size:12px; opacity:.8; margin-top:2px; }
+main { max-width:1200px; margin:auto; padding:28px clamp(14px,3vw,32px) 56px; }
+.eyebrow { text-transform:uppercase; letter-spacing:1.6px; font-size:11px; font-weight:800; color:#52739d; }
+h1,h2,h3 { font-family:var(--site-font-heading); letter-spacing:-.6px; margin:6px 0 10px; }
+h1 { font-size:calc(32px * var(--site-heading-scale)); }
+h2 { font-size:calc(22px * var(--site-heading-scale)); }
+h3 { font-size:calc(16px * var(--site-heading-scale)); }
+p { line-height:1.55; }
+.muted { color:light-dark(#68778d,#a6b4c9); }
+.login-layout { display:grid; grid-template-columns:1.05fr .95fr; gap:24px; align-items:stretch; margin-top:18px; }
+.hero {
+  padding:clamp(24px,5vw,54px);
+  border-radius:calc(24px * var(--site-radius-scale));
+  background:linear-gradient(140deg,#183b66,#275a91);
+  color:white; position:relative; overflow:hidden;
+}
+.hero:after {
+  content:""; position:absolute; width:230px;height:230px;
+  border:38px solid rgba(255,255,255,.08);border-radius:50%;
+  right:-65px;bottom:-90px;pointer-events:none;
+}
+.hero h1 { max-width:480px; line-height:1.1; margin-top:18px; }
+.hero p { max-width:460px; color:#d8e7fa; }
+.feature-list { display:grid; gap:14px; margin-top:32px; }
+.feature { display:flex; gap:12px; align-items:flex-start; font-size:14px; }
+.feature b { display:block; margin-bottom:3px; }
+.feature-icon {
+  background:rgba(255,255,255,.14); width:34px;height:34px;
+  display:grid;place-items:center;border-radius:10px;flex-shrink:0;
+}
+.panel,.card {
+  background:light-dark(#fff,#182231);
+  border:1px solid light-dark(#e1e8f2,#2a3749);
+  border-radius:calc(20px * var(--site-radius-scale));
+  padding:clamp(18px,3vw,28px);
+  box-shadow:0 8px 24px rgba(19,41,71,.04);
+}
+.role-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:20px 0; }
+.role {
+  border:1px solid light-dark(#dce4ef,#334155);
+  border-radius:14px;padding:12px 8px;background:transparent;color:inherit;text-align:left;
+}
+.role.active { border:2px solid #2e69a6;background:light-dark(#edf5ff,#203a56);padding:11px 7px; }
+.role .emoji { font-size:20px; display:block; margin-bottom:9px; }
+.role strong { display:block; font-size:13px; }
+.role small { display:block; margin-top:4px; font-size:11px; color:light-dark(#68778d,#a6b4c9); }
+label { display:block; font-size:12px; font-weight:800; margin:14px 0 7px; }
+input,select {
+  width:100%;border:1px solid light-dark(#d6dfeb,#354459);
+  background:light-dark(#fff,#111b29);color:inherit;
+  padding:12px 13px;border-radius:11px;outline:none;
+}
+input:focus,select:focus { border-color:#3676ba; box-shadow:0 0 0 3px rgba(54,118,186,.13); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.full { width:100%; margin-top:18px; }
+.note { font-size:12px;line-height:1.5;padding:12px 14px;background:light-dark(#f0f5fb,#202d3d);border-radius:12px;margin-top:14px; }
+.demo-hint { font-size:12px;color:light-dark(#68778d,#a6b4c9);margin-top:12px; }
+.hidden { display:none !important; }
+.dashboard-head { display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:22px; }
+.head-actions { display:flex;gap:8px;flex-wrap:wrap; }
+.stats { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0; }
+.stat { background:light-dark(#fff,#182231);border:1px solid light-dark(#e1e8f2,#2a3749);border-radius:16px;padding:18px; }
+.stat .label { font-size:12px;color:light-dark(#68778d,#a6b4c9);font-weight:700; }
+.stat .number { font-size:29px;font-weight:850;letter-spacing:-1px;margin-top:6px; }
+.stat .sub { font-size:11px;margin-top:5px;color:light-dark(#68778d,#a6b4c9); }
+.tabs { display:flex;gap:7px;overflow:auto;padding:3px 0 14px; }
+.tab { white-space:nowrap;background:transparent;border:1px solid light-dark(#dce4ef,#334155);color:inherit; }
+.tab.active { background:var(--site-primary);color:var(--site-on-primary); }
+.toolbar { display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0; }
+.toolbar input { max-width:280px; }
+.toolbar select { width:auto;min-width:130px; }
+.table-wrap { overflow:auto;border:1px solid light-dark(#e1e8f2,#2a3749);border-radius:15px;background:light-dark(#fff,#182231); }
+table { width:100%;border-collapse:collapse;min-width:760px; }
+th,td { padding:13px 14px;text-align:left;border-bottom:1px solid light-dark(#e9eef5,#2b3747);font-size:13px; }
+th { background:light-dark(#f7f9fc,#202d3d);font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:light-dark(#61728a,#afbdd0); }
+tr:last-child td { border-bottom:0; }
+.name-cell { font-weight:800; }
+.subline { font-size:11px;color:light-dark(#68778d,#a6b4c9);margin-top:4px; }
+.status { display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap; }
+.status.good { background:#dcfce7;color:#166534; }
+.status.bad { background:#fee2e2;color:#991b1b; }
+.status.neutral { background:light-dark(#edf1f7,#2b3747);color:light-dark(#536278,#d0d9e5); }
+.streak { color:#b42318;font-weight:850; }
+.warning-row { background:light-dark(#fff5f4,#392326); }
+.inline-select { padding:8px;border-radius:8px;min-width:110px; }
+.two-col { display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-top:18px; }
+.list { display:grid;gap:10px; }
+.list-item { display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid light-dark(#e9eef5,#2b3747);font-size:13px; }
+.list-item:last-child { border-bottom:0; }
+.empty { padding:32px;text-align:center;color:light-dark(#68778d,#a6b4c9); }
+.small { font-size:12px; }
+footer { text-align:center;color:light-dark(#7b899d,#9aa9be);font-size:11px;padding:18px; }
+.toast { position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#152b46;color:white;padding:12px 18px;border-radius:12px;box-shadow:0 10px 30px #0003;z-index:10;font-size:13px; }
+@media(max-width:800px) {
+  .login-layout,.two-col { grid-template-columns:1fr; }
+  .hero { min-height:310px; }
+  .stats { grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:480px) {
+  .role-grid { grid-template-columns:1fr; }
+  .role { display:flex;align-items:center;gap:12px; }
+  .role .emoji { margin:0; }
+  .role small { margin-top:2px; }
+  .stats { gap:8px; }
+  .stat { padding:14px; }
+  .stat .number { font-size:24px; }
+  .form-row { grid-template-columns:1fr; }
+  .topnote { display:none; }
+  h1 { font-size:28px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">✓</div>
+      <div>ClassTrack<div class="topnote">Tuition • Homework • Attendance</div></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;text-align:right">
+      PARENT & STAFF PORTAL
+      <div style="font-size:10px;font-weight:500;opacity:.82;margin-top:5px">
+        Created by Ankit Tiwari · Co-powered by Saksham Classes
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="loginScreen">
+      <div class="eyebrow">A clearer view of every school day</div>
+      <div class="login-layout">
+        <div class="hero">
+          <div class="eyebrow" style="color:#c2dbfa">YOUR CLASSROOM, CONNECTED</div>
+          <h1>Every day counts.<br>Every child matters.</h1>
+          <p>One simple place to follow homework, attendance, and monthly progress from Grade 5 to Grade 10.</p>
+          <div class="feature-list">
+            <div class="feature"><div class="feature-icon">📘</div><div><b>Homework tracking</b>See daily completion status and follow-up streaks.</div></div>
+            <div class="feature"><div class="feature-icon">📅</div><div><b>Attendance history</b>Review present and absent records by date and month.</div></div>
+            <div class="feature"><div class="feature-icon">🔐</div><div><b>Role-based access</b>Parents, class monitors, and owners have separate access.</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="eyebrow">Demo access</div>
+          <h2>Sign in to ClassTrack</h2>
+          <p class="muted small">Choose your role to open the right workspace.</p>
+          <div class="role-grid">
+            <button class="role active" data-role="parent" type="button"><span class="emoji">👨‍👩‍👧</span><strong>Parent</strong><small>View progress</small></button>
+            <button class="role" data-role="monitor" type="button"><span class="emoji">🧑‍🏫</span><strong>Monitor</strong><small>Mark daily status</small></button>
+            <button class="role" data-role="admin" type="button"><span class="emoji">🛡️</span><strong>Main admin</strong><small>Manage all classes</small></button>
+          </div>
+
+          <form id="loginForm">
+            <div id="gradeField">
+              <label for="grade">Class / Grade</label>
+              <select id="grade">
+                <option value="5">Grade 5</option>
+                <option value="6">Grade 6</option>
+                <option value="7">Grade 7</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+              </select>
+            </div>
+            <div id="studentField">
+              <label for="studentCode">Parent access code / Monitor ID</label>
+              <input id="studentCode" placeholder="Enter your access code" autocomplete="off" required>
+            </div>
+            <div id="monitorHint" class="note hidden">Use the password assigned to the selected grade. This demo does not provide secure server-side restrictions.</div>
+            <div id="adminHint" class="note hidden">Main administrator demo access. Do not use this prototype to protect real student data.</div>
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Enter password" autocomplete="current-password" required>
+            <button class="primary full" type="submit">Sign in →</button>
+          </form>
+          <div class="demo-hint">
+            Demo only: Parent <b>parent2026</b>, Admin <b>owner2026</b>.
+            Monitor passwords are grade-specific. These are not secure production accounts.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="dashboard-head">
+        <div>
+          <div class="eyebrow" id="dashEyebrow">OVERVIEW</div>
+          <h1 id="dashTitle">Class dashboard</h1>
+          <div class="muted" id="dashSubtitle">Daily class progress</div>
+        </div>
+        <div class="head-actions">
+          <button class="ghost" id="backLogin">Switch account</button>
+          <button class="primary" id="logout">Log out</button>
+        </div>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="tabs" id="gradeTabs"></div>
+      <div class="tabs" id="sectionTabs"></div>
+      <div id="sectionContent"></div>
+    </section>
+    <footer>ClassTrack • Created by Ankit Tiwari • Co-powered by Saksham Classes • Demo prototype</footer>
+  </main>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+"use strict";
+
+const grades = [5,6,7,8,9,10];
+
+const sample = {
+  5: [["Aarav Sharma","P-501"],["Anaya Patil","P-502"],["Dev Mehta","P-503"],["Ishita Khan","P-504"]],
+  6: [["Aditya Joshi","P-601"],["Diya Shah","P-602"],["Kabir Singh","P-603"],["Sara Shaikh","P-604"]],
+  7: [["Aarohi Gupta","P-701"],["Arjun More","P-702"],["Mira Tiwari","P-703"],["Rehan Khan","P-704"]],
+  8: [["Aditi Kuchekar","P-801"],["Aliya Ansari","P-802"],["Alika Khan","P-803"],["Anjali Gupta","P-804"]],
+  9: [["Ansh Verma","P-901"],["Ira Kulkarni","P-902"],["Manav Patel","P-903"],["Zoya Khan","P-904"]],
+  10: [["Aanya Desai","P-1001"],["Krish Nair","P-1002"],["Riya Jadhav","P-1003"],["Ved Shah","P-1004"]]
+};
+
+let data = {};
+let role = "parent";
+let currentGrade = 5;
+let section = "overview";
+let currentParentCode = "";
+
+const today = new Date();
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const monthKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+const dateLabel = s => new Date(s+"T12:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+
+function initData() {
+  grades.forEach(g => {
+    data[g] = sample[g].map((x,i) => ({
+      id:`${g}-${i+1}`,
+      name:x[0],
+      parentCode:x[1],
+      records:{}
+    }));
+  });
+
+  // Sample records to demonstrate history and warning indicators.
+  const day = new Date(today);
+  day.setDate(day.getDate()-2);
+  const recent = [0,1,2].map(n => {
+    const d = new Date(day);
+    d.setDate(d.getDate()+n);
+    return iso(d);
+  });
+
+  const student = data[8][0];
+  recent.forEach((d,i) => {
+    student.records[d] = {
+      attendance:"present",
+      homework:i===0 ? "incomplete" : "complete",
+      note:""
+    };
+  });
+  data[8][1].records[iso(today)] = {
+    attendance:"present",
+    homework:"complete",
+    note:""
+  };
+}
+initData();
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  setTimeout(() => el.classList.add("hidden"),2400);
+}
+
+function chosenRole(r) {
+  role = r;
+  document.querySelectorAll(".role").forEach(b => {
+    b.classList.toggle("active",b.dataset.role===r);
+  });
+
+  document.getElementById("gradeField").classList.toggle("hidden",r==="admin");
+  document.getElementById("studentField").classList.toggle("hidden",r==="admin");
+  document.getElementById("monitorHint").classList.toggle("hidden",r!=="monitor");
+  document.getElementById("adminHint").classList.toggle("hidden",r!=="admin");
+  document.getElementById("studentCode").required = r!=="admin";
+}
+
+document.querySelectorAll(".role").forEach(b => {
+  b.addEventListener("click",() => chosenRole(b.dataset.role));
+});
+
+document.getElementById("loginForm").addEventListener("submit",e => {
+  e.preventDefault();
+
+  const pass = document.getElementById("password").value;
+  currentGrade = Number(document.getElementById("grade").value);
+  currentParentCode = document.getElementById("studentCode").value.trim();
+
+  const parentPassword = "parent2026";
+  const monitorPasswords = {
+    5:"monitor5",
+    6:"monitor6",
+    7:"monitor7",
+    8:"monitor8",
+    9:"monitor9",
+    10:"monitor10"
+  };
+  const adminPassword = "owner2026";
+
+  if (role==="parent" && pass!==parentPassword) {
+    toast("Incorrect parent demo password.");
+    return;
+  }
+
+  if (role==="monitor" && pass!==monitorPasswords[currentGrade]) {
+    toast("Incorrect monitor password for Grade "+currentGrade+".");
+    return;
+  }
+
+  if (role==="admin" && pass!==adminPassword) {
+    toast("Incorrect main admin demo password.");
+    return;
+  }
+
+  if (role==="parent" &&
+      !data[currentGrade].some(s => s.parentCode.toLowerCase()===currentParentCode.toLowerCase())) {
+    toast("Parent code not found. Try P-801 for Grade 8.");
+    return;
+  }
+
+  if (role==="monitor" && !currentParentCode) {
+    toast("Enter a monitor ID in the access-code field.");
+    return;
+  }
+
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+  section = role==="parent" ? "overview" : role==="monitor" ? "monitor" : "overview";
+  render();
+});
+
+document.getElementById("logout").onclick =
+document.getElementById("backLogin").onclick = () => {
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("loginScreen").classList.remove("hidden");
+  document.getElementById("password").value = "";
+  document.getElementById("studentCode").value = "";
+};
+
+function rec(student,d=iso(today)) {
+  return student.records[d] || {
+    attendance:"not-marked",
+    homework:"not-marked",
+    note:""
+  };
+}
+
+function datesInMonth(m) {
+  const [y,mo] = m.split("-").map(Number);
+  const count = new Date(y,mo,0).getDate();
+  return Array.from({length:count},(_,i) =>
+    `${y}-${String(mo).padStart(2,"0")}-${String(i+1).padStart(2,"0")}`
+  ).filter(d => d<=iso(today));
+}
+
+function streak(student,type) {
+  let n=0;
+  const d=new Date(today);
+
+  for (let i=0;i<370;i++) {
+    const k=iso(d);
+    const r=student.records[k];
+    if (!r) break;
+
+    const v=type==="homework" ? r.homework : r.attendance;
+    if (type==="homework" ? v!=="incomplete" : v!=="absent") break;
+
+    n++;
+    d.setDate(d.getDate()-1);
+  }
+  return n;
+}
+
+function monthStats(student,m) {
+  const ds=datesInMonth(m);
+  const present=ds.filter(d=>rec(student,d).attendance==="present").length;
+  const absent=ds.filter(d=>rec(student,d).attendance==="absent").length;
+  const hwIncomplete=ds.filter(d=>rec(student,d).homework==="incomplete").length;
+  const hwComplete=ds.filter(d=>rec(student,d).homework==="complete").length;
+  return {present,absent,hwIncomplete,hwComplete,days:ds.length};
+}
+
+function classStats(g) {
+  const list=data[g];
+  const all=list.flatMap(s=>Object.values(s.records));
+  return {
+    students:list.length,
+    present:all.filter(r=>r.attendance==="present").length,
+    absent:all.filter(r=>r.attendance==="absent").length,
+    inc:all.filter(r=>r.homework==="incomplete").length
+  };
+}
+
+function status(v,type) {
+  const map = type==="attendance" ? {
+    present:["Present","good"],
+    absent:["Absent","bad"],
+    "not-marked":["Not marked","neutral"]
+  } : {
+    complete:["Complete","good"],
+    incomplete:["Incomplete","bad"],
+    "not-marked":["Not marked","neutral"]
+  };
+
+  const a=map[v]||["Not marked","neutral"];
+  return `<span class="status ${a[1]}">${a[0]}</span>`;
+}
+
+function render() {
+  const admin=role==="admin";
+  const monitor=role==="monitor";
+  const parent=role==="parent";
+
+  document.getElementById("dashEyebrow").textContent =
+    admin ? "OWNER CONTROL CENTRE" : monitor ? "DAILY MONITOR WORKSPACE" : "PARENT VIEW";
+
+  document.getElementById("dashTitle").textContent =
+    admin ? "All-class overview" : monitor ? `Grade ${currentGrade} daily register` : "Your child's progress";
+
+  document.getElementById("dashSubtitle").textContent =
+    admin ? "Manage student lists, review all grades, and oversee monthly records." :
+    monitor ? "Only update the grade assigned to your monitor account." :
+    `Grade ${currentGrade} • Daily attendance and homework record`;
+
+  document.getElementById("gradeTabs").innerHTML = parent ? "" :
+    grades.map(g=>`<button class="tab ${g===currentGrade?"active":""}" data-grade="${g}">Grade ${g}</button>`).join("");
+
+  document.querySelectorAll("[data-grade]").forEach(b => {
+    b.onclick=()=> {
+      currentGrade=Number(b.dataset.grade);
+      render();
+    };
+  });
+
+  const visible = parent
+    ? data[currentGrade].filter(s=>s.parentCode.toLowerCase()===currentParentCode.toLowerCase())
+    : data[currentGrade];
+
+  const st = parent ? {
+    students:visible.length,
+    present:visible.filter(s=>rec(s).attendance==="present").length,
+    absent:visible.filter(s=>rec(s).attendance==="absent").length,
+    inc:visible.filter(s=>rec(s).homework==="incomplete").length
+  } : classStats(currentGrade);
+
+  document.getElementById("stats").innerHTML = `
+    <div class="stat">
+      <div class="label">${parent?"CHILD PROFILE":"STUDENTS"}</div>
+      <div class="number">${parent?(visible[0]?.name?"1":"0"):st.students}</div>
+      <div class="sub">${parent?"Linked to parent code":"Grade "+currentGrade+" roster"}</div>
+    </div>
+    <div class="stat">
+      <div class="label">PRESENT TODAY</div>
+      <div class="number">${parent?(visible[0]&&rec(visible[0]).attendance==="present"?1:0):st.present}</div>
+      <div class="sub">Recorded attendance</div>
+    </div>
+    <div class="stat">
+      <div class="label">ABSENT TODAY</div>
+      <div class="number">${parent?(visible[0]&&rec(visible[0]).attendance==="absent"?1:0):st.absent}</div>
+      <div class="sub">Needs follow-up</div>
+    </div>
+    <div class="stat">
+      <div class="label">HW INCOMPLETE</div>
+      <div class="number">${parent?(visible[0]&&rec(visible[0]).homework==="incomplete"?1:0):st.inc}</div>
+      <div class="sub">Today's homework</div>
+    </div>`;
+
+  const tabs = admin
+    ? [["overview","Class register"],["students","Manage students"],["monthly","Monthly report"],["notices","Notices"]]
+    : monitor
+    ? [["monitor","Mark today"],["monthly","Monthly report"]]
+    : [["overview","Today's status"],["monthly","Monthly history"]];
+
+  document.getElementById("sectionTabs").innerHTML = tabs.map(([id,label]) =>
+    `<button class="tab ${section===id?"active":""}" data-section="${id}">${label}</button>`
+  ).join("");
+
+  document.querySelectorAll("[data-section]").forEach(b => {
+    b.onclick=()=> {
+      section=b.dataset.section;
+      render();
+    };
+  });
+
+  const content=document.getElementById("sectionContent");
+
+  if (section==="students" && admin) {
+    content.innerHTML=studentManager();
+    wireStudentManager();
+    return;
+  }
+
+  if (section==="notices" && admin) {
+    content.innerHTML=noticeManager();
+    wireNotices();
+    return;
+  }
+
+  if (section==="monthly") {
+    content.innerHTML=monthlyView(visible,admin||monitor);
+    wireMonthly();
+    return;
+  }
+
+  content.innerHTML=registerView(visible,admin,monitor,parent);
+  wireRegister();
+}
+
+function registerView(list,admin,monitor,parent) {
+  return `<div class="card">
+    <div class="dashboard-head" style="margin-bottom:10px">
+      <div>
+        <h2>${parent?"Daily check-in":monitor?"Daily homework & attendance":`Grade ${currentGrade} register`}</h2>
+        <div class="muted small">Today • ${dateLabel(iso(today))} • Records are grouped by date</div>
+      </div>
+      ${admin?'<button class="secondary" id="toStudents">+ Add student</button>':""}
+    </div>
+    <div class="toolbar">
+      <input id="search" placeholder="Search student name…" aria-label="Search students">
+      <select id="dateFilter">
+        <option value="${iso(today)}">Today</option>
+        <option value="all">All recorded dates</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Student</th><th>Attendance</th><th>Homework</th><th>Streak / warning</th>${admin?"<th>Owner action</th>":""}</tr></thead>
+        <tbody id="registerRows">${registerRows(list,admin,monitor,parent)}</tbody>
+      </table>
+    </div>
+    <p class="muted small">Red highlight appears after 3 consecutive days of incomplete homework or absence. Streaks are based on consecutive calendar days with recorded statuses.</p>
+  </div>`;
+}
+
+function registerRows(list,admin,monitor,parent) {
+  if (!list.length) {
+    return `<tr><td colspan="5" class="empty">No student linked to this parent code.</td></tr>`;
+  }
+
+  return list.map(s => {
+    const r=rec(s);
+    const hw=streak(s,"homework");
+    const ab=streak(s,"attendance");
+    const warn=hw>=3||ab>=3;
+
+    return `<tr class="${warn?"warning-row":""}" data-name="${s.name.toLowerCase()}">
+      <td>
+        <div class="name-cell">${esc(s.name)}</div>
+        <div class="subline">Grade ${currentGrade} • ID ${s.id}</div>
+      </td>
+      <td>${monitor ? `
+        <select class="inline-select" data-student="${s.id}" data-field="attendance">
+          <option value="not-marked" ${r.attendance==="not-marked"?"selected":""}>Not marked</option>
+          <option value="present" ${r.attendance==="present"?"selected":""}>Present</option>
+          <option value="absent" ${r.attendance==="absent"?"selected":""}>Absent</option>
+        </select>` : status(r.attendance,"attendance")}
+      </td>
+      <td>${monitor ? `
+        <select class="inline-select" data-student="${s.id}" data-field="homework">
+          <option value="not-marked" ${r.homework==="not-marked"?"selected":""}>Not marked</option>
+          <option value="complete" ${r.homework==="complete"?"selected":""}>Complete</option>
+          <option value="incomplete" ${r.homework==="incomplete"?"selected":""}>Incomplete</option>
+        </select>` : status(r.homework,"homework")}
+      </td>
+      <td>${warn
+        ? `<span class="streak">⚠ ${Math.max(hw,ab)}-day streak</span><div class="subline">Please follow up</div>`
+        : `<span class="muted small">${hw||ab?`HW ${hw}d / absent ${ab}d`:"No active warning"}</span>`}
+      </td>
+      ${admin?`<td><button class="danger" data-remove="${s.id}">Remove</button></td>`:""}
+    </tr>`;
+  }).join("");
+}
+
+function wireRegister() {
+  const search=document.getElementById("search");
+
+  if (search) {
+    search.oninput=()=>document.querySelectorAll("#registerRows tr[data-name]").forEach(tr => {
+      tr.classList.toggle("hidden",!tr.dataset.name.includes(search.value.toLowerCase()));
+    });
+  }
+
+  const date=document.getElementById("dateFilter");
+  if (date) {
+    date.onchange=()=> {
+      if (date.value==="all") {
+        toast("Monthly history shows recorded dates.");
+        section="monthly";
+        render();
+      } else {
+        toast("Showing daily record for "+dateLabel(date.value));
+      }
+    };
+  }
+
+  document.querySelectorAll("[data-field]").forEach(sel => {
+    sel.onchange=()=> {
+      const s=data[currentGrade].find(s=>s.id===sel.dataset.student);
+      if (!s) return;
+
+      s.records[iso(today)] ||= {
+        attendance:"not-marked",
+        homework:"not-marked",
+        note:""
+      };
+
+      s.records[iso(today)][sel.dataset.field]=sel.value;
+      render();
+      toast("Daily status saved in this demo.");
+    };
+  });
+
+  document.querySelectorAll("[data-remove]").forEach(b => {
+    b.onclick=()=> {
+      const s=data[currentGrade].find(s=>s.id===b.dataset.remove);
+      if (s && confirm(`Remove ${s.name} from the demo roster?`)) {
+        data[currentGrade]=data[currentGrade].filter(x=>x.id!==s.id);
+        render();
+        toast("Student removed from demo roster.");
+      }
+    };
+  });
+
+  const add=document.getElementById("toStudents");
+  if (add) add.onclick=()=> {
+    section="students";
+    render();
+  };
+}
+
+function studentManager() {
+  return `<div class="two-col">
+    <div class="card">
+      <h2>Student directory</h2>
+      <p class="muted small">Add a student to the selected grade. This demo does not require a home address.</p>
+      <form id="addStudentForm">
+        <label for="newName">Student full name</label>
+        <input id="newName" required placeholder="e.g. Rohan Patil">
+        <div class="form-row">
+          <div>
+            <label for="newCode">Parent code</label>
+            <input id="newCode" required placeholder="e.g. P-805">
+          </div>
+          <div>
+            <label for="newAddress">Optional note</label>
+            <input id="newAddress" placeholder="Leave blank if not needed">
+          </div>
+        </div>
+        <button class="primary full">Add student</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Roster tools</h2>
+      <div class="list">
+        <div class="list-item"><span>Selected grade</span><b>Grade ${currentGrade}</b></div>
+        <div class="list-item"><span>Students in roster</span><b>${data[currentGrade].length}</b></div>
+        <div class="list-item"><span>Other grades</span><b>Demo restriction only</b></div>
+      </div>
+      <div class="note">In a live version, backend security rules must enforce each monitor's grade access.</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h2>Names in Grade ${currentGrade}</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Parent code</th><th>Owner action</th></tr></thead>
+        <tbody>
+          ${data[currentGrade].map(s=>`<tr>
+            <td class="name-cell">${esc(s.name)}</td>
+            <td>${esc(s.parentCode)}</td>
+            <td><button class="danger" data-remove="${s.id}">Remove</button></td>
+          </tr>`).join("") || '<tr><td colspan="3" class="empty">No students yet.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function wireStudentManager() {
+  document.getElementById("addStudentForm").onsubmit=e=> {
+    e.preventDefault();
+
+    const name=document.getElementById("newName").value.trim();
+    const code=document.getElementById("newCode").value.trim();
+
+    if (!name||!code) return;
+
+    if (data[currentGrade].some(s=>s.parentCode.toLowerCase()===code.toLowerCase())) {
+      toast("That parent code is already used in this grade.");
+      return;
+    }
+
+    data[currentGrade].push({
+      id:`${currentGrade}-${Date.now()}`,
+      name,
+      parentCode:code,
+      records:{}
+    });
+
+    data[currentGrade].sort((a,b)=>a.name.localeCompare(b.name));
+    render();
+    toast("Student added to demo roster.");
+  };
+
+  document.querySelectorAll("[data-remove]").forEach(b => {
+    b.onclick=()=> {
+      const s=data[currentGrade].find(s=>s.id===b.dataset.remove);
+      if (s && confirm(`Remove ${s.name}?`)) {
+        data[currentGrade]=data[currentGrade].filter(x=>x.id!==s.id);
+        render();
+        toast("Student removed.");
+      }
+    };
+  });
+}
+
+function monthlyView(list,canSeeClass) {
+  const m=monthKey(today);
+
+  return `<div class="card">
+    <div class="dashboard-head">
+      <div>
+        <h2>Monthly progress report</h2>
+        <div class="muted small">${new Date(today.getFullYear(),today.getMonth(),1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})} • Month-to-date totals</div>
+      </div>
+      <div>
+        <label for="monthPick">Month</label>
+        <input id="monthPick" type="month" value="${m}">
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Student</th><th>Present</th><th>Absent</th><th>HW complete</th><th>HW incomplete</th><th>Warning</th></tr></thead>
+        <tbody id="monthlyRows">${monthlyRows(list,m)}</tbody>
+      </table>
+    </div>
+    <div class="note">Totals count dates with a status recorded. Unmarked days are not automatically counted as absent or incomplete.</div>
+  </div>`;
+}
+
+function monthlyRows(list,m) {
+  return list.map(s=> {
+    const x=monthStats(s,m);
+    const hw=streak(s,"homework");
+    const ab=streak(s,"attendance");
+    const w=hw>=3||ab>=3;
+
+    return `<tr class="${w?"warning-row":""}">
+      <td class="name-cell">${esc(s.name)}</td>
+      <td>${x.present}</td>
+      <td>${x.absent}</td>
+      <td>${x.hwComplete}</td>
+      <td>${x.hwIncomplete}</td>
+      <td>${w?`<span class="streak">⚠ ${Math.max(hw,ab)} day streak</span>`:"—"}</td>
+    </tr>`;
+  }).join("") || '<tr><td colspan="6" class="empty">No student records.</td></tr>';
+}
+
+function wireMonthly() {
+  const p=document.getElementById("monthPick");
+
+  if (p) {
+    p.onchange=()=> {
+      document.querySelector("#monthlyRows").innerHTML=monthlyRows(
+        role==="parent"
+          ? data[currentGrade].filter(s=>s.parentCode.toLowerCase()===currentParentCode.toLowerCase())
+          : data[currentGrade],
+        p.value
+      );
+    };
+  }
+}
+
+function noticeManager() {
+  return `<div class="card">
+    <h2>Notices & announcements</h2>
+    <p class="muted small">Post an update for parents. Notices in this demo are stored only temporarily.</p>
+    <form id="noticeForm">
+      <label for="noticeTitle">Notice title</label>
+      <input id="noticeTitle" required placeholder="e.g. Saturday test schedule">
+      <label for="noticeBody">Notice message</label>
+      <input id="noticeBody" required placeholder="Write a short message">
+      <button class="primary full">Publish notice</button>
+    </form>
+    <div id="noticeList" class="list" style="margin-top:20px"></div>
+  </div>`;
+}
+
+let notices=[{
+  title:"Welcome to ClassTrack",
+  body:"Demo notice: daily homework and attendance are recorded by the class monitor.",
+  date:iso(today)
+}];
+
+function wireNotices() {
+  const show=()=> {
+    document.getElementById("noticeList").innerHTML=notices.map((n,i)=>`
+      <div class="list-item">
+        <div>
+          <b>${esc(n.title)}</b>
+          <div class="subline">${esc(n.body)} • ${dateLabel(n.date)}</div>
+        </div>
+        <button class="danger" data-notice="${i}">Remove</button>
+      </div>`).join("");
+
+    document.querySelectorAll("[data-notice]").forEach(b => {
+      b.onclick=()=> {
+        notices.splice(Number(b.dataset.notice),1);
+        show();
+        toast("Notice removed from demo.");
+      };
+    });
+  };
+
+  show();
+
+  document.getElementById("noticeForm").onsubmit=e=> {
+    e.preventDefault();
+
+    notices.unshift({
+      title:document.getElementById("noticeTitle").value.trim(),
+      body:document.getElementById("noticeBody").value.trim(),
+      date:iso(today)
+    });
+
+    show();
+    e.target.reset();
+    toast("Notice published in demo.");
+  };
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g,c=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
+}
+</script>
+</body>
+</html>
